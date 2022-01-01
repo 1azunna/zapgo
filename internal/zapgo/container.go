@@ -3,7 +3,6 @@ package zapgo
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -91,16 +90,13 @@ func ifZapContainerExists() (string, bool) {
 	return resp[0].ID, true
 }
 
-func CreateZapContainer(imageName string, zapPort string, logger Logger) string {
+func CreateZapContainer(imageName string, zapPort string, addConfig []string, logger Logger) string {
 	ctx, cancel := context.WithTimeout(context.Background(), TimeoutInS)
 	defer cancel()
 
 	dockerClient := NewClient()
-	startCommand := []string{"sh", "-c", fmt.Sprintf("zap-x.sh -daemon -port %s -host 0.0.0.0 -config api.disablekey=true -config api.addrs.addr.name=\".*\" -config api.addrs.addr.regex=true", zapPort)}
-	dir, err := os.Getwd()
-	if err != nil {
-		logrus.Fatal(err)
-	}
+	startCommand := []string{"sh", "-c", fmt.Sprintf("zap-x.sh -daemon -port %s -host 0.0.0.0 -config api.disablekey=true -config api.addrs.addr.name=\".*\" -config api.addrs.addr.regex=true %s", zapPort, addConfig)}
+	dir := CurrentDir()
 	containerPort, err := nat.NewPort("tcp", zapPort)
 	if err != nil {
 		logrus.Fatal(err)
@@ -136,7 +132,7 @@ func CreateZapContainer(imageName string, zapPort string, logger Logger) string 
 	containerID, ifExists := ifZapContainerExists()
 	if ifExists {
 		logger.Info(fmt.Sprintf("The %s container already exists with ID %s", ContainerName, containerID))
-		removeZapContainer(containerID, logger)
+		RemoveZapContainer(containerID, logger)
 	}
 
 	logger.Info(fmt.Sprintf("Creating new container: %s...", ContainerName))
@@ -150,7 +146,7 @@ func CreateZapContainer(imageName string, zapPort string, logger Logger) string 
 
 }
 
-func removeZapContainer(containerID string, logger Logger) {
+func RemoveZapContainer(containerID string, logger Logger) {
 	ctx, cancel := context.WithTimeout(context.Background(), TimeoutInS)
 	defer cancel()
 

@@ -11,9 +11,10 @@ import (
 )
 
 type InitCommand struct {
-	Release string `long:"release" choice:"stable" choice:"weekly" default:"weekly" subcommands-optional:"init" description:"The image release version"`
-	Port    string `long:"port" default:"8080" description:"Initialize ZAP with a custom port. Default is 8080"`
-	Pull    bool   `short:"p" long:"pull" description:"Pull the latest ZAP image from dockerhub"`
+	Release string   `long:"release" choice:"stable" choice:"weekly" default:"weekly" subcommands-optional:"init" description:"The image release version"`
+	Port    string   `long:"port" default:"8080" subcommands-optional:"init" description:"Initialize ZAP with a custom port. Default is 8080"`
+	Pull    bool     `short:"p" long:"pull" subcommands-optional:"init" description:"Pull the latest ZAP image from dockerhub"`
+	Configs []string `long:"extraConfig" subcommands-optional:"init" description:"Additional ZAP configurations to use when initializing ZAP"`
 }
 
 var retrySchedule = []time.Duration{
@@ -25,7 +26,7 @@ var retrySchedule = []time.Duration{
 
 var initCommand InitCommand
 
-func (i *InitCommand) Execute(logger zapgo.Logger) {
+func (i *InitCommand) Execute(logger zapgo.Logger) (string, string) {
 
 	logger.Info(fmt.Sprintf("Using the %v release", i.Release))
 	imageStr := fmt.Sprintf("owasp/zap2docker-%v", i.Release)
@@ -38,15 +39,20 @@ func (i *InitCommand) Execute(logger zapgo.Logger) {
 	// Initialize ZAP Network
 	zapgo.SetupZapNetwork(logger)
 	// Create ZAP Container
-	containerID := zapgo.CreateZapContainer(imageStr, i.Port, logger)
+	containerID := zapgo.CreateZapContainer(imageStr, i.Port, i.Configs, logger)
 	// Start the ZAP Container
 	zapgo.StartZapContainer(containerID, logger)
+	// Return the zap host url
+	base := fmt.Sprintf("http://localhost:%s", i.Port)
+	i.HealthCheck(logger)
+	return containerID, base
 }
 
 func (i *InitCommand) HealthCheck(logger zapgo.Logger) {
+	// Wait 10seconds before checking for liveness
 	time.Sleep(10 * time.Second)
 	for _, backoff := range retrySchedule {
-		_, err := http.Get(fmt.Sprintf("http://127.0.0.1:%s", initCommand.Port))
+		_, err := http.Get(fmt.Sprintf("http://localhost:%s", i.Port))
 		if err == nil {
 			logger.Info("ZAP container initialized successfully!")
 			break
@@ -55,7 +61,7 @@ func (i *InitCommand) HealthCheck(logger zapgo.Logger) {
 		logger.Warn(fmt.Sprintf("Retrying in %v", backoff))
 		time.Sleep(backoff)
 	}
-	resp, _ := http.Get(fmt.Sprintf("http://127.0.0.1:%s", initCommand.Port))
+	resp, _ := http.Get(fmt.Sprintf("http://localhost:%s", i.Port))
 	if resp == nil {
 		logger.Error("Could not reach ZAP container")
 		os.Exit(1)

@@ -1,0 +1,83 @@
+--- # OWASP ZAP automation configuration file, for more details see https://www.zaproxy.org/docs/automate/automation-framework/
+env:
+  contexts:
+  - name: "Default Context"
+    urls:
+      - http://www.example.com
+    includePaths:
+      - ".*"
+    excludePaths: []
+  parameters:
+    failOnError: false
+    failOnWarning: false
+    progressToStdout: true
+  vars: {}
+
+jobs:
+- type: "addOns"
+  name: "addOns"
+  parameters:
+    updateAddOns: false
+  
+- type: "passiveScan-config"
+  name: "passiveScan-config"
+  parameters:
+    maxAlertsPerRule: 0
+    scanOnlyInScope: true
+    maxBodySizeInBytesToScan: 0
+    enableTags: false
+  rules: []
+  
+- type: spider                       
+  parameters:
+    context: "Default Context"
+    url: ""            
+  tests:
+  - name: 'At least 1 URL found'                  
+    type: 'stats'                                   
+    statistic: 'automation.spider.urls.added'       
+    operator: '>='                                  
+    value: 1                                      
+    onFail: 'info'                                 
+
+- type: "passiveScan-wait"
+  name: "passiveScan-wait"
+  parameters: {}
+  
+- type: "outputSummary"
+  name: "outputSummary"
+  parameters:
+    format: "Long"
+    summaryFile: "/zap/wrk/summary-report.json"
+  rules: []
+  
+- type: "report"
+  name: "report"
+  parameters:
+    template: "traditional-html-plus"
+    theme: "light"
+    reportDir: "/zap/wrk"
+    reportFile: "zap-report"
+    reportTitle: "ZAP Automation Scan Report"
+    reportDescription: ""
+    displayReport: false
+  risks:
+    - "info"
+    - "low"
+    - "medium"
+    - "high"
+  confidences:
+    - "falsepositive"
+    - "low"
+    - "medium"
+    - "high"
+    - "confirmed"
+  sections:
+    - "passingrules"
+    - "instancecount"
+    - "alertdetails"
+    - "alertcount"
+    - "params"
+    - "chart"
+    - "statistics"
+  

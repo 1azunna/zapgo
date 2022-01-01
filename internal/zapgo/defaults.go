@@ -1,6 +1,11 @@
 package zapgo
 
-import "time"
+import (
+	"os"
+	"time"
+
+	"github.com/sirupsen/logrus"
+)
 
 // Wait durations for a response from the Docker daemon before returning an error to the caller.
 const (
@@ -16,3 +21,11 @@ const (
 	// Name of ZAP Container
 	ContainerName = "zapgo-container"
 )
+
+func CurrentDir() string {
+	dir, err := os.Getwd()
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	return dir
+}

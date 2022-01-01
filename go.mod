@@ -3,6 +3,7 @@ module github.com/1azunna/zapgo
 go 1.16
 
 require (
+	github.com/1azunna/zap-api-go v0.0.0-20220101182146-308fdb44d027 // indirect
 	github.com/containerd/containerd v1.5.8 // indirect
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/docker/go-connections v0.4.0
