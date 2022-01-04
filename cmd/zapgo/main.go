@@ -58,8 +58,7 @@ func main() {
 	case "init":
 		initCommand.Execute(logger)
 	case "run":
-		containerId, baseUrl := initCommand.Execute(logger)
-		runCommand.Execute(containerId, baseUrl, logger)
+		runCommand.Execute(logger)
 	default:
 		os.Exit(1)
 	}

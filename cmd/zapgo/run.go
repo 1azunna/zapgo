@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 	"time"
 
@@ -13,29 +14,29 @@ const (
 )
 
 type RunCommand struct {
-	InitCommand
+	*InitCommand
 	File string `short:"f" long:"file" required:"true" description:"ZAP Automation framework config file. All files and folders in the current directory will be mounted to the /zap/wrk directory."`
 }
 
-// type RunOptions struct {
-// 	Host     *url.URL
-// 	Context  string
-// 	Target   string
-// 	Scripts  []struct{}
-// 	Policies []string
-// }
-
-// var options RunOptions
 var runCommand RunCommand
 
-func (r *RunCommand) Execute(containerId string, baseUrl string, logger zapgo.Logger) {
+func (r *RunCommand) Execute(logger zapgo.Logger) {
 	filename := filepath.Join("/zap/wrk/", r.File)
 	logger.Info(fmt.Sprintf("Running automation framework with file %s", filename))
-	// runOptions := &zapgo.RunOptions{
-	// 	Host: baseUrl,
-	// }
-	// zapgo.Run(filename, runOptions)
 
+	initValues := &InitCommand{
+		Release: runCommand.Release,
+		Port:    runCommand.Port,
+		Pull:    runCommand.Pull,
+		Configs: runCommand.Configs,
+	}
+	yamlData, err := ioutil.ReadFile(r.File)
+	if err != nil {
+		panic(fmt.Sprintf("Could not parse yaml file %s \n%s", r.File, err))
+	}
+	// Will use this later to print results.
+	zapgo.GetContexts(yamlData, logger)
+	containerId, baseUrl := initValues.Execute(logger)
 	client := zapgo.ZapClient(baseUrl)
 	plan, err := client.Automation().RunPlan(filename)
 	if err != nil {
@@ -52,7 +53,7 @@ func (r *RunCommand) Execute(containerId string, baseUrl string, logger zapgo.Lo
 	c := time.Tick(10 * time.Second)
 
 	index := 0
-	maxIndexSecs := 30 * 60
+	maxIndexSecs := maxScanDurationInMins * 60
 	maxIndex := maxIndexSecs / 10
 
 	for range c {
@@ -80,14 +81,6 @@ func (r *RunCommand) Execute(containerId string, baseUrl string, logger zapgo.Lo
 		}
 
 	}
-	// for _, backoff := range retrySchedule {
-	// 	status, err := client.Automation().PlanProgress(planId)
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	fmt.Println(status)
-	// 	time.Sleep(backoff)
-	// }
 
 	r.TearDown(containerId, logger)
 }

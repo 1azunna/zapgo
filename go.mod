@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/1azunna/zap-api-go v0.0.0-20220101182146-308fdb44d027 // indirect
+	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/containerd/containerd v1.5.8 // indirect
 	github.com/docker/docker v20.10.12+incompatible
 	github.com/docker/go-connections v0.4.0
@@ -16,6 +17,7 @@ require (
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/ory/dockertest/v3 v3.8.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0

@@ -11,10 +11,10 @@ import (
 )
 
 type InitCommand struct {
-	Release string   `long:"release" choice:"stable" choice:"weekly" default:"weekly" subcommands-optional:"init" description:"The image release version"`
-	Port    string   `long:"port" default:"8080" subcommands-optional:"init" description:"Initialize ZAP with a custom port. Default is 8080"`
-	Pull    bool     `short:"p" long:"pull" subcommands-optional:"init" description:"Pull the latest ZAP image from dockerhub"`
-	Configs []string `long:"extraConfig" subcommands-optional:"init" description:"Additional ZAP configurations to use when initializing ZAP"`
+	Release string   `long:"release" choice:"stable" choice:"weekly" default:"weekly" description:"The image release version"`
+	Port    string   `long:"port" default:"8080" description:"Initialize ZAP with a custom port. Default is 8080"`
+	Pull    bool     `short:"p" long:"pull" description:"Pull the latest ZAP image from dockerhub"`
+	Configs []string `long:"extraConfig" description:"Additional ZAP configurations to use when initializing ZAP"`
 }
 
 var retrySchedule = []time.Duration{

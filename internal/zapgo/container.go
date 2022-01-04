@@ -3,6 +3,7 @@ package zapgo
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -95,7 +96,7 @@ func CreateZapContainer(imageName string, zapPort string, addConfig []string, lo
 	defer cancel()
 
 	dockerClient := NewClient()
-	startCommand := []string{"sh", "-c", fmt.Sprintf("zap-x.sh -daemon -port %s -host 0.0.0.0 -config api.disablekey=true -config api.addrs.addr.name=\".*\" -config api.addrs.addr.regex=true %s", zapPort, addConfig)}
+	startCommand := []string{"sh", "-c", fmt.Sprintf("zap-x.sh -daemon -port %s -host 0.0.0.0 -config api.disablekey=true -config api.addrs.addr.name=\".*\" -config api.addrs.addr.regex=true %s", zapPort, strings.Join(addConfig, " "))}
 	dir := CurrentDir()
 	containerPort, err := nat.NewPort("tcp", zapPort)
 	if err != nil {
