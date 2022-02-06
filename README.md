@@ -13,17 +13,22 @@ This package was created to make it easy for developers to perform dynamic appli
 
 ### Requirements
 
-- Ensure docker is installed. if using in CI, ensure there is support for docker in docker.
-- Internet connectivity to pull zap2docker and/or postman/newman docker images.  
+- Ensure docker is installed. If running in CI environment, ensure there is support for docker in docker.
 
 ### Using Go
-Ensure $GOPATH/bin is added to the $PATH
+The latest version can be installed using go install or go get. Ensure $GOPATH/bin is added to the $PATH
+```bash
+go install github.com/1azunna/zapgo
+```
 ```bash
 go get github.com/1azunna/zapgo
 ```
-### Github Releases
+### Github Release
+
+See [Releases](https://github.com/1azunna/zapgo/releases)
 
 ## Usage
+
 
 ```bash
 Usage:
@@ -81,6 +86,9 @@ You can pass aditional zap command line options with Init or Run commands which 
 
 ### Run
 Use the run command to start a zap scan with zap's automation framework. The automation framework file can be specified using `--file=path/to/automation.yaml`. The file must be placed within the working directory or in a subfolder in the working directory.
+
+See [zap.yml](./zap.yml) for the latest Automation framework configuration options.
+
 ```bash
 zapgo init
 zapgo run --file=automation.yaml
@@ -98,3 +106,10 @@ zapgo run -c --file=automation.yaml --collection=collection.json --environment=e
 
 ### Alert filtering
 Filtering for alerts by risk and confidence, to reduce false positives is also a possibility. You can also set the exit status to 1 if issues are detected eg. `--risk=High --fail=Medium`
+
+## References
+- Official zaproxy project [here](https://github.com/zaproxy/zaproxy)
+- Official zaproxy website [here](https://www.zaproxy.org/)
+
+## Contributing
+All contributions via issues or pull requests are welcomed. 
