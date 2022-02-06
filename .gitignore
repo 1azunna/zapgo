@@ -13,3 +13,7 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+#zapgo test files
+zap.log
+summary-report.json
