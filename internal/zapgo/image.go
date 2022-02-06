@@ -25,12 +25,17 @@ type pullEvent struct {
 	} `json:"progressDetail"`
 }
 
-func ZapImageExists(image string) bool {
+type imageClient interface {
+	ImageList(ctx context.Context, options types.ImageListOptions) ([]types.ImageSummary, error)
+	ImagePull(ctx context.Context, refStr string, options types.ImagePullOptions) (io.ReadCloser, error)
+}
+
+func (z *Zapgo) ImageExists(dockerClient imageClient, image string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), TimeoutInS)
 	defer cancel()
 
-	dockerClient := NewClient()
 	args := filters.NewArgs(filters.Arg("reference", image))
+	logrus.Debugf("Checking if %s already exists", image)
 	imgs, err := dockerClient.ImageList(ctx, types.ImageListOptions{
 		Filters: args,
 	})
@@ -41,6 +46,7 @@ func ZapImageExists(image string) bool {
 	for _, img := range imgs {
 		for _, repotag := range img.RepoTags {
 			if strings.HasPrefix(repotag, image) {
+				logrus.Debug("Image exists !!")
 				return true
 			}
 		}
@@ -48,12 +54,10 @@ func ZapImageExists(image string) bool {
 	return false
 }
 
-func PullZapImage(image string, logger Logger) bool {
-	// create a new docker client
-	dockerClient := NewClient()
+func (z *Zapgo) PullImage(dockerClient imageClient, image string) bool {
 	ctx := context.Background()
 	// pull the zap image from DockerHub
-	logger.Info(fmt.Sprintf("Pulling the latest image verson for %s", image))
+	logrus.Info(fmt.Sprintf("Pulling the latest image verson for %s", image))
 	resp, err := dockerClient.ImagePull(ctx, image, types.ImagePullOptions{})
 	if err != nil {
 		logrus.Fatalf("Failed to pull image %s due to %v", image, err)
@@ -84,7 +88,7 @@ func PullZapImage(image string, logger Logger) bool {
 
 		// Check if the line is one of the final two ones
 		if strings.HasPrefix(event.Status, "Digest:") || strings.HasPrefix(event.Status, "Status:") {
-			logger.Info(event.Status)
+			logrus.Info(event.Status)
 			continue
 		}
 
@@ -124,9 +128,9 @@ func PullZapImage(image string, logger Logger) bool {
 		cursor.ClearLine()
 
 		if event.Status == "Pull complete" {
-			logger.Info(fmt.Sprintf("%s: %s", event.ID, event.Status))
+			logrus.Infof("%s: %s", event.ID, event.Status)
 		} else {
-			logger.Info(fmt.Sprintf("%s: %s %s", event.ID, event.Status, event.Progress))
+			logrus.Infof("%s: %s %s", event.ID, event.Status, event.Progress)
 		}
 
 	}

@@ -1,8 +1,7 @@
 package zapgo
 
 import (
-	"fmt"
-
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -16,11 +15,23 @@ type ConfigFile struct {
 	Jobs []struct{} `yaml:"jobs"`
 }
 
-type Contexts []map[string][]string
+type Contexts []struct {
+	Name string   `yaml:"name"`
+	Urls []string `yaml:"urls"`
+}
 
-var contexts Contexts
+var contexts []map[string][]string
 
-func GetContexts(config []byte, logger Logger) Contexts {
+func GetContexts(config []byte) Contexts {
+	c := ConfigFile{}
+	err := yaml.Unmarshal(config, &c)
+	if err != nil {
+		panic(err)
+	}
+	return c.Env.Contexts
+}
+
+func PrintContexts(config []byte) []map[string][]string {
 	c := ConfigFile{}
 	err := yaml.Unmarshal(config, &c)
 	if err != nil {
@@ -30,7 +41,7 @@ func GetContexts(config []byte, logger Logger) Contexts {
 	for _, v := range c.Env.Contexts {
 		m[v.Name] = v.Urls
 		contexts = append(contexts, m)
-		logger.Info(fmt.Sprintf("Context: %s, Urls: %s", v.Name, v.Urls))
+		logrus.Infof("Context: %s, Urls: %s", v.Name, v.Urls)
 	}
 	return contexts
 }

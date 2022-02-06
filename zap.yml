@@ -5,8 +5,39 @@ env:                                   # The environment, mandatory
       urls:                            # A mandatory list of top level urls, everything under each url will be included
       includePaths:                    # An optional list of regexes to include
       excludePaths:                    # An optional list of regexes to exclude
-      authentication:                  # TBA: In time to cover all auth configs
-  vars:                                # List of 1 or more variables, can be used in urls and selected other parameters
+      authentication:
+        method:                        # String, one of 'manual', 'http', 'form', 'json' or 'script'
+        parameters:                    # May include any required for scripts. All of the parameters support vars except for the port 
+          hostname:                    # String, only for 'http' authentication
+          port:                        # Int, only for 'http' authentication
+          realm:                       # String, only for 'http' authentication
+          loginPageUrl:                # String, the login page URL to read prior to making the request, only for 'form' or 'json' authentication
+          loginRequestUrl:             # String, the login URL to request, only for 'form' or 'json' authentication
+          loginRequestBody:            # String, the login request body - if not supplied a GET request will be used, only for 'form' or 'json' authentication
+          script:                      # String, path to script, only for 'script' authentication
+          scriptEngine:                # String, the name of the script engine to use, only for 'script' authentication
+        verification:
+          method:                      # String, one of 'response', 'request', 'both', 'poll'
+          loggedInRegex:               # String, regex pattern for determining if logged in
+          loggedOutRegex:              # String, regex pattern for determining if logged out
+          pollFrequency:               # Int, the poll frequency, only for 'poll' verification
+          pollUnits:                   # String, the poll units, one of 'requests', 'seconds', only for 'poll' verification
+          pollUrl:                     # String, the URL to poll, only for 'poll' verification
+          pollPostData:                # String, post dat to include in the poll, only for 'poll' verification
+          pollAdditionalHeaders:       # List of additional headers for poll request, only for 'poll' verification
+          - header:                    # The header name
+            value:                     # The header value
+      sessionManagement:
+        method:                        # String, one of 'cookie', 'http', 'script'
+        parameters:                    # List of 0 or more parameters - may include any required for scripts
+          script:                      # String, path to script, only for 'script' session management
+          scriptEngine:                # String, the name of the script engine to use, only for 'script' session management
+      users:                           # List of one or more users available to use for authentication
+      - name:                          # String, the name to be used by the jobs
+        credentials:                   # List of user credentials - may include any required for scripts, vars supported
+          username:                    # String, the username to use when authenticating
+          password:                    # String, the password to use when authenticating
+  vars:                                # List of 0 or more variables, can be used in urls and selected other parameters
   parameters:
     failOnError: true                  # If set exit on an error         
     failOnWarning: false               # If set exit on a warning
@@ -15,7 +46,7 @@ env:                                   # The environment, mandatory
 jobs:
   - type: addOns                       # Add-on management
     parameters:
-      updateAddOns: true               # Update any add-ons that have new versions
+      updateAddOns: false              # Currently disabled due to problems updating the framework and jobs while they are running
     install:                           # A list of non standard add-ons to install from the ZAP Marketplace
     uninstall:                         # A list of standard add-ons to uninstall
   - type: alertFilter                  # Used to change the risk levels of alerts
@@ -45,6 +76,7 @@ jobs:
       threshold:                       # String: The Alert Threshold for this rule, one of Off, Low, Medium, High, default: Medium
   - type: requestor                    # Used to send specific requests to targets
     parameters:
+      user:                            # String: An optional user to use for authenticated requests, must be defined in the env
     requests:                          # A list of requests to make
       - url:                           # String: A mandatory URL of the request to be made
         name:                          # String: Optional name for the request, for documentation only
@@ -76,6 +108,7 @@ jobs:
   - type: spider                       # The traditional spider - fast but doesnt handle modern apps so well
     parameters:
       context:                         # String: Name of the context to spider, default: first context
+      user:                            # String: An optional user to use for authentication, must be defined in the env
       url:                             # String: Url to start spidering from, default: first context URL
       maxDuration:                     # Int: The max time in minutes the spider will be allowed to run for, default: 0 unlimited
       maxDepth:                        # Int: The maximum tree depth to explore, default 5
@@ -123,6 +156,10 @@ jobs:
         operator: '>='                       # String ['==', '!=', '>=', '>', '<', '<=']: Operator used for testing
         value: 100                           # Int: Change this to the number of URLs you expect to find
         onFail: 'info'                       # String [warn, error, info]: Change this to 'warn' or 'error' for the test to take effect
+  - type: delay                        # Pause the plan for a set period of time or event (file created, programmatic method called, API endpoint called)
+    parameters:
+      time:                            # String: The time to wait, format any of ['hh:mm:ss', 'mm:ss', 'ss'], default: 0
+      fileName:                        # String: Name of a file which will cause the job to end early if created, default: empty
   - type: passiveScan-wait             # Passive scan wait for the passive scanner to finish
     parameters:
       maxDuration: 5                   # Int: The max time to wait for the passive scanner, default: 0 unlimited
@@ -144,6 +181,7 @@ jobs:
   - type: activeScan                   # The active scanner - this actively attacks the target so should only be used with permission
     parameters:
       context:                         # String: Name of the context to attack, default: first context
+      user:                            # String: An optional user to use for authentication, must be defined in the env
       policy:                          # String: Name of the scan policy to be used, default: Default Policy
       maxRuleDurationInMins:           # Int: The max time in minutes any individual rule will be allowed to run for, default: 0 unlimited
       maxScanDurationInMins:           # Int: The max time in minutes the active scanner will be allowed to run for, default: 0 unlimited

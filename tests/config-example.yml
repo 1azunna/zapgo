@@ -31,7 +31,7 @@ jobs:
 - type: spider                       
   parameters:
     context: "Default Context"
-    url: ""            
+    url: "http://www.example.com"            
   tests:
   - name: 'At least 1 URL found'                  
     type: 'stats'                                   
@@ -39,10 +39,6 @@ jobs:
     operator: '>='                                  
     value: 1                                      
     onFail: 'info'                                 
-
-- type: "passiveScan-wait"
-  name: "passiveScan-wait"
-  parameters: {}
   
 - type: "outputSummary"
   name: "outputSummary"
@@ -50,34 +46,4 @@ jobs:
     format: "Long"
     summaryFile: "/zap/wrk/summary-report.json"
   rules: []
-  
-- type: "report"
-  name: "report"
-  parameters:
-    template: "traditional-html-plus"
-    theme: "light"
-    reportDir: "/zap/wrk"
-    reportFile: "zap-report"
-    reportTitle: "ZAP Automation Scan Report"
-    reportDescription: ""
-    displayReport: false
-  risks:
-    - "info"
-    - "low"
-    - "medium"
-    - "high"
-  confidences:
-    - "falsepositive"
-    - "low"
-    - "medium"
-    - "high"
-    - "confirmed"
-  sections:
-    - "passingrules"
-    - "instancecount"
-    - "alertdetails"
-    - "alertcount"
-    - "params"
-    - "chart"
-    - "statistics"
   

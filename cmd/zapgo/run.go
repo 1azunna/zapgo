@@ -1,12 +1,18 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
+	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/1azunna/zapgo/internal/zapgo"
+	"github.com/docker/docker/client"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -14,65 +20,137 @@ const (
 )
 
 type RunCommand struct {
-	*InitCommand
-	File string `short:"f" long:"file" required:"true" description:"ZAP Automation framework config file. All files and folders in the current directory will be mounted to the /zap/wrk directory."`
+	File        string `long:"file" required:"true" description:"ZAP Automation framework config file. Automation file must be placed within the current working directory."`
+	Collection  string `long:"collection" description:"Postman collection file or url to run."`
+	Environment string `long:"environment" description:"Postman environment file or url to use with postman collection"`
+	Policy      string `long:"policy" description:"Import custom zap scan policy. Policy file must be placed within the current working directory."`
+	Clean       bool   `short:"c" long:"clean" description:"Remove any existing zapgo containers and initialize ZAP."`
+	Confidence  string `long:"confidence" default:"Medium" choice:"Low" choice:"Medium" choice:"High" choice:"Confirmed" description:"Display alerts with confidence filter set to either Low, Medium, High or Confirmed."`
+	Risk        string `long:"risk" default:"Low" choice:"Low" choice:"Medium" choice:"High" choice:"Informational" description:"Display alerts with risk filter set to either Informational, Low, Medium, High."`
+	Fail        string `long:"fail" choice:"Low" choice:"Medium" choice:"High" description:"Set exit status to fail on a certain risk level. Allowed Risk levels are Low|Medium|High."`
 }
 
 var runCommand RunCommand
 
-func (r *RunCommand) Execute(logger zapgo.Logger) {
-	filename := filepath.Join("/zap/wrk/", r.File)
-	logger.Info(fmt.Sprintf("Running automation framework with file %s", filename))
+type RiskCount struct {
+	High          []int
+	Medium        []int
+	Low           []int
+	Informational []int
+}
 
-	initValues := &InitCommand{
-		Release: runCommand.Release,
-		Port:    runCommand.Port,
-		Pull:    runCommand.Pull,
-		Configs: runCommand.Configs,
+func Newman(zap *zapgo.Zapgo, client *client.Client) {
+	if !zap.ImageExists(client, zap.NewmanImage) {
+		zap.PullImage(client, zap.NewmanImage)
 	}
+	zap.RunNewman(client)
+}
+
+func countSum(arr []int) int {
+	res := 0
+	for i := 0; i < len(arr); i++ {
+		res += arr[i]
+	}
+	return res
+}
+
+func (r *RunCommand) Execute(zap *zapgo.Zapgo, client *client.Client) {
+
+	var containerId string
+	// setup zap client
+	ZapClient := zapgo.ZapClient(BaseURL)
+
+	if r.Clean {
+		cleanContainers(zap, client)
+		id := initCommand.Execute(zap, client)
+		containerId = id
+	} else {
+		id, ifExists := zap.IfContainerExists(client, zap.Container)
+		containerId = id
+		if !ifExists {
+			logrus.Fatal("ZAP is not running. Run \"zapgo init\" OR add the \"--clean\" flag to \"zapgo run\"")
+		}
+	}
+	// Check for automation file
+	wd, err := os.Getwd()
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(wd, r.File)); errors.Is(err, os.ErrNotExist) {
+		logrus.Fatalf("The specified file %s does not exist.", filepath.Join(wd, r.File))
+	}
+	filename := filepath.Join("/zap/wrk/", r.File)
+	//Check for policy file
+	if _, err := os.Stat(filepath.Join(wd, r.Policy)); len(r.Policy) > 0 && errors.Is(err, os.ErrNotExist) {
+		logrus.Fatalf("The specified file %s does not exist.", filepath.Join(wd, r.Policy))
+	} else if len(r.Policy) > 0 && err == nil {
+		policyfile := filepath.Join("/zap/wrk/", r.Policy)
+		resp, err := ZapClient.Ascan().ImportScanPolicy(policyfile)
+		if err != nil {
+			panic(err)
+		}
+		// fmt.Println(resp)
+		if resp["Result"] == "OK" {
+			logrus.Info("Policy imported successfully")
+		} else {
+			logrus.Warnf("Failed to import policy file %s with error %s", filepath.Join(wd, r.Policy), resp["Result"])
+		}
+	}
+
+	logrus.Infof("Running automation framework with file %s", filename)
+
 	yamlData, err := ioutil.ReadFile(r.File)
 	if err != nil {
 		panic(fmt.Sprintf("Could not parse yaml file %s \n%s", r.File, err))
 	}
 	// Will use this later to print results.
-	zapgo.GetContexts(yamlData, logger)
-	containerId, baseUrl := initValues.Execute(logger)
-	client := zapgo.ZapClient(baseUrl)
-	plan, err := client.Automation().RunPlan(filename)
+	zapgo.PrintContexts(yamlData)
+
+	//Run postman collections if available
+	if zap.Collection != "" {
+		Newman(zap, client)
+		for range time.Tick(5 * time.Second) {
+			if _, ifExists := zap.IfContainerExists(client, zap.NewmanContainer); !ifExists {
+				break
+			}
+		}
+	}
+
+	plan, err := ZapClient.Automation().RunPlan(filename)
 	if err != nil {
 		panic(err)
 	}
 	for k, v := range plan {
-		logger.Debug(fmt.Sprintf("%s:%s", k, v))
+		logrus.Debug(fmt.Sprintf("%s:%s", k, v))
 		if k == "code" {
-			logger.Error(plan["message"].(string))
-			r.TearDown(containerId, logger)
+			logrus.Error(plan["message"].(string))
+			zap.RemoveContainer(client, containerId)
 		}
 	}
 	planId := plan["planId"].(string)
 	c := time.Tick(10 * time.Second)
-
 	index := 0
 	maxIndexSecs := maxScanDurationInMins * 60
 	maxIndex := maxIndexSecs / 10
 
 	for range c {
 		finished := false
-		//Download the current contents of the URL and do something with it
-		resp, err := client.Automation().PlanProgress(planId)
+		//Get the plan progress
+		resp, err := ZapClient.Automation().PlanProgress(planId)
 		if err != nil {
 			panic(err)
 		}
 		// Check if the status is finished
 		index = index + 1
 		if index == maxIndex {
-			logger.Error("Plan Timout Exceeded")
+			logrus.Error("Plan Timeout Exceeded")
+			os.Exit(1)
 		}
 		// TO-Do Implement check for plan errors
 		for k := range resp {
 			if k == "finished" {
 				finished = true
-				logger.Info("Automation plan complete")
+				logrus.Info("Automation plan complete")
 				break
 			}
 		}
@@ -82,11 +160,73 @@ func (r *RunCommand) Execute(logger zapgo.Logger) {
 
 	}
 
-	r.TearDown(containerId, logger)
+	//Get contexts
+	var alertsList [][]string
+	var totalCount RiskCount
+	contexts := zapgo.GetContexts(yamlData)
+	filters := zapgo.Filters{
+		Confidence: r.Confidence,
+		Risk:       r.Risk,
+	}
+	for _, v := range contexts {
+		for _, url := range v.Urls {
+			zapAlerts, err := ZapClient.Alert().AlertsByRisk(url, "true")
+			if err != nil {
+				panic(err)
+			}
+			// fmt.Println(zapAlerts)
+			alerts := zapgo.GetAlerts(zapAlerts, filters)
+			for i := 0; i < len(alerts); i++ {
+				alertsList = append(alertsList, alerts[i])
+			}
+			zapAlertsCount, err := ZapClient.Alert().AlertCountsByRisk(url, "true")
+			if err != nil {
+				panic(err)
+			}
+			count := zapgo.GetAlertsCount(zapAlertsCount)
+			totalCount.High = append(totalCount.High, count.High)
+			totalCount.Medium = append(totalCount.Medium, count.Medium)
+			totalCount.Low = append(totalCount.Low, count.Low)
+			totalCount.Informational = append(totalCount.Informational, count.Informational)
+		}
+	}
+
+	zapgo.PrintAlerts(alertsList)
+	//Print out zap log
+	zap.ContainerLogs(client, containerId)
+
+	// Quit Zap
+	zap.RemoveContainer(client, containerId)
+	// zap.RemoveZapNetwork(client)
+
+	totalAlerts := countSum(totalCount.High) + countSum(totalCount.Medium) + countSum(totalCount.Low) + countSum(totalCount.Informational)
+	logrus.Infof("A total of %s alerts were found. See zap.log for zap output.", strconv.Itoa(totalAlerts))
+	// Set exit code 1 if fail is specified
+	r.setExitCode(totalCount)
 }
 
-func (r *RunCommand) TearDown(container string, logger zapgo.Logger) {
-	zapgo.RemoveZapContainer(container, logger)
+func (r *RunCommand) setExitCode(riskcount RiskCount) {
+	v := reflect.ValueOf(riskcount)
+	typeV := v.Type()
+	var fail bool
+	for i := 0; i < v.NumField(); i++ {
+		arr := v.Field(i).Interface().([]int)
+		if typeV.Field(i).Name == r.Fail {
+			if countSum(arr) > 0 {
+				fail = true
+			} else {
+				for x := i; x < v.NumField(); x++ {
+					arr := v.Field(x).Interface().([]int)
+					if countSum(arr) > 0 {
+						fail = true
+					}
+				}
+			}
+		}
+	}
+	if fail {
+		os.Exit(1)
+	}
 }
 
 func init() {
