@@ -1,0 +1,49 @@
+--- # OWASP ZAP automation configuration file, for more details see https://www.zaproxy.org/docs/automate/automation-framework/
+env:
+  contexts:
+  - name: "Default Context"
+    urls:
+      - http://www.example.com
+    includePaths:
+      - ".*"
+    excludePaths: []
+  parameters:
+    failOnError: false
+    failOnWarning: false
+    progressToStdout: true
+  vars: {}
+
+jobs:
+- type: "addOns"
+  name: "addOns"
+  parameters:
+    updateAddOns: false
+  
+- type: "passiveScan-config"
+  name: "passiveScan-config"
+  parameters:
+    maxAlertsPerRule: 0
+    scanOnlyInScope: true
+    maxBodySizeInBytesToScan: 0
+    enableTags: false
+  rules: []
+  
+- type: spider                       
+  parameters:
+    context: "Default Context"
+    url: "http://www.example.com"            
+  tests:
+  - name: 'At least 1 URL found'                  
+    type: 'stats'                                   
+    statistic: 'automation.spider.urls.added'       
+    operator: '>='                                  
+    value: 1                                      
+    onFail: 'info'                                 
+  
+- type: "outputSummary"
+  name: "outputSummary"
+  parameters:
+    format: "Long"
+    summaryFile: "/zap/wrk/summary-report.json"
+  rules: []
+  
