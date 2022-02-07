@@ -16,25 +16,27 @@ var retrySchedule = []time.Duration{
 }
 
 func (z *Zapgo) HealthCheck(url string) {
+	var response *http.Response
 	// Wait 10seconds before checking for liveness
 	time.Sleep(10 * time.Second)
 	for _, backoff := range retrySchedule {
 		resp, err := http.Get(url)
-		if err == nil {
+		if err != nil {
+			logrus.Warn("Container is not ready")
+			logrus.Warnf("Retrying in %v", backoff)
+			time.Sleep(backoff)
+		} else if err == nil {
+			response = resp
 			logrus.Info("Container initialized successfully!")
 			break
+		} else {
+			logrus.Fatal(err)
 		}
 		defer resp.Body.Close()
 
-		logrus.Warn("Container is not ready")
-		logrus.Warnf("Retrying in %v", backoff)
-		time.Sleep(backoff)
 	}
-	resp, _ := http.Get(url)
-	if resp == nil {
-		logrus.Error("Could not reach host")
+	if response == nil {
+		logrus.Error("Could not verify that zap is running.")
 		os.Exit(1)
 	}
-	defer resp.Body.Close()
-
 }
