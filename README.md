@@ -22,16 +22,27 @@ See [Releases](https://github.com/1azunna/zapgo/releases)
 Using Wget
 
 ```bash
-wget -qO- https://github.com/1azunna/zapgo/releases/download/v0.0.1/zapgo-v0.0.1-<OS>-<Arch>.tar.gz | tar -xvzf - -C . ;\
-  mv ./zapgo /usr/local/bin/zapgo && chmod +x /usr/local/bin/zapgo;
+wget -qO- https://github.com/1azunna/zapgo/releases/download/v0.0.1/zapgo-v0.0.1-<OS>-<Arch>.tar.gz | tar -xvzf - -C . 
+mv ./zapgo /usr/local/bin/zapgo
+chmod +x /usr/local/bin/zapgo
 
 ```
 
 Using Curl
 ```bash
-curl -sSfL https://github.com/1azunna/zapgo/releases/download/v0.0.1/zapgo-v0.0.1-<OS>-<Arch>.tar.gz | tar -xvzf - -C . ;\
-  mv ./zapgo /usr/local/bin/zapgo && chmod +x /usr/local/bin/zapgo;
+curl -sSfL https://github.com/1azunna/zapgo/releases/download/v0.0.1/zapgo-v0.0.1-<OS>-<Arch>.tar.gz | tar -xvzf - -C . 
+mv ./zapgo /usr/local/bin/zapgo
+chmod +x /usr/local/bin/zapgo
 ```
+
+### Build from source
+
+```bash
+git clone https://github.com/1azunna/zapgo.git
+cd zapgo
+go build -o $GOPATH/bin ./cmd/zapgo
+```
+You can replace **$GOPATH** with your `/usr/local` directory if you don't want to have the binary in the GOPATH.
 
 ## Usage
 
