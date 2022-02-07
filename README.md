@@ -15,17 +15,23 @@ This package was created to make it easy for developers to perform dynamic appli
 
 - Ensure docker is installed. If running in CI environment, ensure there is support for docker in docker.
 
-### Using Go
-The latest version can be installed using go install or go get. Ensure $GOPATH/bin is added to the $PATH
-```bash
-go install github.com/1azunna/zapgo
-```
-```bash
-go get github.com/1azunna/zapgo
-```
 ### Github Release
 
 See [Releases](https://github.com/1azunna/zapgo/releases)
+
+Using Wget
+
+```bash
+wget -qO- https://github.com/1azunna/zapgo/releases/download/v0.0.1/zapgo-v0.0.1-<OS>-<Arch>.tar.gz | tar -xvzf - -C . ;\
+  mv ./zapgo /usr/local/bin/zapgo && chmod +x /usr/local/bin/zapgo;
+
+```
+
+Using Curl
+```bash
+curl -sSfL https://github.com/1azunna/zapgo/releases/download/v0.0.1/zapgo-v0.0.1-<OS>-<Arch>.tar.gz | tar -xvzf - -C . ;\
+  mv ./zapgo /usr/local/bin/zapgo && chmod +x /usr/local/bin/zapgo;
+```
 
 ## Usage
 
