@@ -1,7 +1,7 @@
 --- # OWASP ZAP automation configuration file, for more details see https://www.zaproxy.org/docs/automate/automation-framework/
 env:
   contexts:
-  - name: "Default Context"
+  - name: "Context1"
     urls:
       - http://www.example.com
     includePaths:
@@ -14,11 +14,6 @@ env:
   vars: {}
 
 jobs:
-- type: "addOns"
-  name: "addOns"
-  parameters:
-    updateAddOns: false
-  
 - type: "passiveScan-config"
   name: "passiveScan-config"
   parameters:
@@ -26,19 +21,29 @@ jobs:
     scanOnlyInScope: true
     maxBodySizeInBytesToScan: 0
     enableTags: false
-  rules: []
-  
+  rules:
+    - id: 2
+    - id: 10003
+    - id: 10010
+    - id: 10011
+    - id: 10023
+    - id: 10024
+    - id: 10025
+    - id: 10027
+    - id: 10037
+    - id: 10054
+    - id: 10055
+
 - type: spider                       
   parameters:
-    context: "Default Context"
-    url: "http://www.example.com"            
+    context: "Context1"       
   tests:
   - name: 'At least 1 URL found'                  
     type: 'stats'                                   
     statistic: 'automation.spider.urls.added'       
     operator: '>='                                  
     value: 1                                      
-    onFail: 'info'                                 
+    onFail: 'info'                             
   
 - type: "outputSummary"
   name: "outputSummary"

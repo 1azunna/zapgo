@@ -28,11 +28,11 @@ func (z *Zapgo) HealthCheck(url string) {
 		} else if err == nil {
 			response = resp
 			logrus.Info("Container initialized successfully!")
+			defer resp.Body.Close()
 			break
 		} else {
 			logrus.Fatal(err)
 		}
-		defer resp.Body.Close()
 
 	}
 	if response == nil {

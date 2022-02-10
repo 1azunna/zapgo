@@ -5,8 +5,9 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/1azunna/zap-api-go/zap"
 	"github.com/1azunna/zapgo/internal/zapgo"
-	"github.com/jessevdk/go-flags"
+	flags "github.com/jessevdk/go-flags"
 	"github.com/sirupsen/logrus"
 )
 
@@ -24,6 +25,20 @@ var introtext string
 var BaseURL string
 
 var parser = flags.NewParser(&options, flags.Default)
+
+// ZAP Http Client for making API requests
+func ZapClient(baseUrl string) zap.Interface {
+	cfg := zap.Config{
+		Base:      fmt.Sprintf("%s/JSON/", baseUrl),
+		BaseOther: fmt.Sprintf("%s/OTHER/", baseUrl),
+		Proxy:     baseUrl,
+	}
+	client, err := zap.NewClient(&cfg)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	return client
+}
 
 func main() {
 
