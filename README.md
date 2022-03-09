@@ -53,7 +53,7 @@ Usage:
 
 Application Options:
   -v, --verbose                              Show verbose output
-      --release=[stable|weekly|live|bare]    The docker image tag to use (default: bare)
+      --release=[stable|weekly|live|bare]    The docker image tag to use (default: stable)
       --port=                                Initialize ZAP with a custom port. (default: 8080)
   -p, --pull                                 Pull the latest ZAP image from dockerhub
       --opts=                                Additional ZAP command line options to use when initializing ZAP

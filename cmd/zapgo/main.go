@@ -14,7 +14,7 @@ import (
 type Options struct {
 	// Example of verbosity with level
 	Verbose []bool   `short:"v" long:"verbose" description:"Show verbose output"`
-	Release string   `long:"release" choice:"stable" choice:"weekly" choice:"live" choice:"bare" default:"bare" description:"The docker image tag to use"`
+	Release string   `long:"release" choice:"stable" choice:"weekly" choice:"live" choice:"bare" default:"stable" description:"The docker image tag to use"`
 	Port    *int     `long:"port" default:"8080" description:"Initialize ZAP with a custom port."`
 	Pull    bool     `short:"p" long:"pull" description:"Pull the latest ZAP image from dockerhub"`
 	Configs []string `long:"opts" description:"Additional ZAP command line options to use when initializing ZAP"`
