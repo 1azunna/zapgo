@@ -1,7 +1,7 @@
---- # OWASP ZAP automation configuration file, for more details see https://www.zaproxy.org/docs/automate/automation-framework/
+--- # Sample OWASP ZAP automation configuration file, for more details see https://www.zaproxy.org/docs/automate/automation-framework/
 env:
   contexts:
-  - name: "Default Context"
+  - name: "Context1"
     urls:
       - http://www.example.com
     includePaths:
@@ -14,36 +14,47 @@ env:
   vars: {}
 
 jobs:
-- type: "addOns"
-  name: "addOns"
-  parameters:
-    updateAddOns: false
+  - type: "passiveScan-config"
+    parameters:
+      maxAlertsPerRule: 0
+      scanOnlyInScope: true
+      maxBodySizeInBytesToScan: 0
+      enableTags: false
+
+  - type: spider                       
+    parameters:
+      context: "Context1"       
+    tests:
+    - name: 'At least 1 URL found'                  
+      type: 'stats'                                   
+      statistic: 'automation.spider.urls.added'       
+      operator: '>='                                  
+      value: 1                                      
+      onFail: 'info'      
+
+  - type: "passiveScan-wait"
+    parameters: {}
+
+  - type: "activeScan"
+    parameters:
+      context: "Default Context"
+      policy: "API-Limited"
+      maxRuleDurationInMins: 0
+      maxScanDurationInMins: 0                       
+    
+  - type: "outputSummary"
+    parameters:
+      format: "Long"
+      summaryFile: "/zap/wrk/summary-report.json"
+    rules: []
   
-- type: "passiveScan-config"
-  name: "passiveScan-config"
-  parameters:
-    maxAlertsPerRule: 0
-    scanOnlyInScope: true
-    maxBodySizeInBytesToScan: 0
-    enableTags: false
-  rules: []
-  
-- type: spider                       
-  parameters:
-    context: "Default Context"
-    url: "http://www.example.com"            
-  tests:
-  - name: 'At least 1 URL found'                  
-    type: 'stats'                                   
-    statistic: 'automation.spider.urls.added'       
-    operator: '>='                                  
-    value: 1                                      
-    onFail: 'info'                                 
-  
-- type: "outputSummary"
-  name: "outputSummary"
-  parameters:
-    format: "Long"
-    summaryFile: "/zap/wrk/summary-report.json"
-  rules: []
+  - type: "report"
+    parameters:
+      template: "traditional-html-plus"
+      theme: "dark"
+      reportDir: "/zap/wrk"
+      reportFile: "zap-report"
+      reportTitle: "ZAP Scan Report"
+      reportDescription: ""
+      displayReport: false
   

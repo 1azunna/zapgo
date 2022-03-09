@@ -5,15 +5,16 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/1azunna/zap-api-go/zap"
 	"github.com/1azunna/zapgo/internal/zapgo"
-	"github.com/jessevdk/go-flags"
+	flags "github.com/jessevdk/go-flags"
 	"github.com/sirupsen/logrus"
 )
 
 type Options struct {
 	// Example of verbosity with level
 	Verbose []bool   `short:"v" long:"verbose" description:"Show verbose output"`
-	Release string   `long:"release" choice:"stable" choice:"weekly" default:"weekly" description:"The image release version"`
+	Release string   `long:"release" choice:"stable" choice:"weekly" choice:"live" choice:"bare" default:"stable" description:"The docker image tag to use"`
 	Port    *int     `long:"port" default:"8080" description:"Initialize ZAP with a custom port."`
 	Pull    bool     `short:"p" long:"pull" description:"Pull the latest ZAP image from dockerhub"`
 	Configs []string `long:"opts" description:"Additional ZAP command line options to use when initializing ZAP"`
@@ -24,6 +25,20 @@ var introtext string
 var BaseURL string
 
 var parser = flags.NewParser(&options, flags.Default)
+
+// ZAP Http Client for making API requests
+func ZapClient(baseUrl string) zap.Interface {
+	cfg := zap.Config{
+		Base:      fmt.Sprintf("%s/JSON/", baseUrl),
+		BaseOther: fmt.Sprintf("%s/OTHER/", baseUrl),
+		Proxy:     baseUrl,
+	}
+	client, err := zap.NewClient(&cfg)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	return client
+}
 
 func main() {
 

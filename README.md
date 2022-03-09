@@ -52,14 +52,14 @@ Usage:
   zapgo [OPTIONS] <clean | init | run>
 
 Application Options:
-  -v, --verbose                 Show verbose output
-      --release=[stable|weekly] The image release version (default: weekly)
-      --port=                   Initialize ZAP with a custom port. (default: 8080)
-  -p, --pull                    Pull the latest ZAP image from dockerhub
-      --opts=                   Additional ZAP command line options to use when initializing ZAP
+  -v, --verbose                              Show verbose output
+      --release=[stable|weekly|live|bare]    The docker image tag to use (default: stable)
+      --port=                                Initialize ZAP with a custom port. (default: 8080)
+  -p, --pull                                 Pull the latest ZAP image from dockerhub
+      --opts=                                Additional ZAP command line options to use when initializing ZAP
 
 Help Options:
-  -h, --help                    Show this help message
+  -h, --help                                 Show this help message
 
 Available commands:
   clean  Clean Zapgo
@@ -67,7 +67,7 @@ Available commands:
   run    Run ZAP scan
 
 [init command options]
-    -n, --networkOnly       Create the zapgo-network without initializing the ZAP container.
+    -n, --networkOnly                         Create the zapgo-network without initializing the ZAP container.
 
 [run command options]
         --file=                                  ZAP Automation framework config file. Automation file file must be placed within the current working directory..
@@ -78,6 +78,7 @@ Available commands:
         --confidence=[Low|Medium|High|Confirmed] Display alerts with confidence filter set to either Low, Medium, High or Confirmed. (default: Medium)
         --risk=[Low|Medium|High|Informational]   Display alerts with risk filter set to either Informational, Low, Medium, High. (default: Low)
         --fail=[Low|Medium|High]                 Set exit status to fail on a certain risk level. Allowed Risk levels are Low|Medium|High.
+        --display=[Sites|Contexts|All]           Set display output format for alerts found. (default: All)
 
 
 ```

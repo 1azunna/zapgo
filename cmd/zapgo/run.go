@@ -28,6 +28,7 @@ type RunCommand struct {
 	Confidence  string `long:"confidence" default:"Medium" choice:"Low" choice:"Medium" choice:"High" choice:"Confirmed" description:"Display alerts with confidence filter set to either Low, Medium, High or Confirmed."`
 	Risk        string `long:"risk" default:"Low" choice:"Low" choice:"Medium" choice:"High" choice:"Informational" description:"Display alerts with risk filter set to either Informational, Low, Medium, High."`
 	Fail        string `long:"fail" choice:"Low" choice:"Medium" choice:"High" description:"Set exit status to fail on a certain risk level. Allowed Risk levels are Low|Medium|High."`
+	Display     string `long:"display" choice:"Sites" choice:"Contexts" choice:"All" default:"All" description:"Set display output format for alerts found."`
 }
 
 var runCommand RunCommand
@@ -58,7 +59,7 @@ func (r *RunCommand) Execute(zap *zapgo.Zapgo, client *client.Client) {
 
 	var containerId string
 	// setup zap client
-	ZapClient := zapgo.ZapClient(BaseURL)
+	ZapClient := ZapClient(BaseURL)
 
 	if r.Clean {
 		cleanContainers(zap, client)
@@ -90,12 +91,14 @@ func (r *RunCommand) Execute(zap *zapgo.Zapgo, client *client.Client) {
 			panic(err)
 		}
 		// fmt.Println(resp)
-		if resp["Result"] == "OK" {
-			logrus.Info("Policy imported successfully")
-		} else {
-			logrus.Warnf("Failed to import policy file %s with error %s", filepath.Join(wd, r.Policy), resp["Result"])
-		}
+		logrus.Debugf("importing scan policy %s : %s", filepath.Join(wd, r.Policy), resp["Result"])
 	}
+	// Useful zap scan Options
+	resp, err := ZapClient.Pscan().SetScanOnlyInScope("true")
+	if err != nil {
+		panic(err)
+	}
+	logrus.Debugf("Setting Pscan option SetScanOnlyInScope: %s", resp["Result"])
 
 	logrus.Infof("Running automation framework with file %s", filename)
 
@@ -188,10 +191,21 @@ func (r *RunCommand) Execute(zap *zapgo.Zapgo, client *client.Client) {
 			totalCount.Medium = append(totalCount.Medium, count.Medium)
 			totalCount.Low = append(totalCount.Low, count.Low)
 			totalCount.Informational = append(totalCount.Informational, count.Informational)
+
+			if r.Display == "Sites" {
+				fmt.Printf("\n Alerts discovered on Site: %s \n", url)
+				zapgo.PrintAlerts(alertsList)
+			}
+		}
+		if r.Display == "Contexts" {
+			fmt.Printf("\n Alerts discovered on Context: %s \n", v.Name)
+			zapgo.PrintAlerts(alertsList)
 		}
 	}
 
-	zapgo.PrintAlerts(alertsList)
+	if r.Display == "All" {
+		zapgo.PrintAlerts(alertsList)
+	}
 	//Print out zap log
 	zap.ContainerLogs(client, containerId)
 

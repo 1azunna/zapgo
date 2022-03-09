@@ -16,4 +16,8 @@
 
 #zapgo test files
 zap.log
+zap-report*
+zap-report/
 summary-report.json
+collection.json
+environment.json
