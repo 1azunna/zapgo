@@ -198,7 +198,7 @@ func (r *RunCommand) Execute(zap *zapgo.Zapgo, client *client.Client) {
 			}
 		}
 		if r.Display == "Contexts" {
-			fmt.Printf("\n Alerts discovered on Context: %s \n", v)
+			fmt.Printf("\n Alerts discovered on Context: %s \n", v.Name)
 			zapgo.PrintAlerts(alertsList)
 		}
 	}
