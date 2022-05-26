@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -40,8 +40,7 @@ func ZapClient(baseUrl string) zap.Interface {
 	return client
 }
 
-func main() {
-
+func init() {
 	introtext = `ZapGo is a command line utility for dynamic security testing based on the OWASP ZAP Project.
 	See zapgo --help for usage details.`
 
@@ -59,7 +58,9 @@ func main() {
 			os.Exit(1)
 		}
 	}
+}
 
+func Execute() {
 	// Create logger
 	if len(options.Verbose) > 0 {
 		logrus.SetLevel(logrus.DebugLevel)
@@ -105,5 +106,4 @@ func main() {
 	default:
 		os.Exit(1)
 	}
-
 }
