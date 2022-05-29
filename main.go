@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/1azunna/zapgo/cmd"
+	"github.com/1azunna/zapgo/docker/cmd"
 )
 
 func main() {

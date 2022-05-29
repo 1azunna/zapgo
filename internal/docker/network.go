@@ -1,8 +1,9 @@
-package zapgo
+package docker
 
 import (
 	"context"
 
+	"github.com/1azunna/zapgo/internal/defaults"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
@@ -14,23 +15,23 @@ type networkClient interface {
 	NetworkRemove(ctx context.Context, networkID string) error
 }
 
-func (z *Zapgo) IfZapNetworkExists(dockerClient networkClient) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), TimeoutInS)
+func (c Docker) IfZapNetworkExists(dockerClient networkClient) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), defaults.TimeoutInS)
 	defer cancel()
 
-	_, err := dockerClient.NetworkInspect(ctx, z.Network, types.NetworkInspectOptions{})
+	_, err := dockerClient.NetworkInspect(ctx, c.ZapConfig.Network, types.NetworkInspectOptions{})
 	if err != nil {
 		if client.IsErrNotFound(err) {
 			return false
 		}
 		// Unexpected error while inspecting docker networks, we want to crash the app.
-		logrus.Fatalf("Failed to inspect docker network %s due to %v", z.Network, err)
+		logrus.Fatalf("Failed to inspect docker network %s due to %v", c.ZapConfig.Network, err)
 	}
 	return true
 }
 
 func createZapNetwork(dockerClient networkClient, network string) {
-	ctx, cancel := context.WithTimeout(context.Background(), TimeoutInS)
+	ctx, cancel := context.WithTimeout(context.Background(), defaults.TimeoutInS)
 	defer cancel()
 
 	logrus.Infof("Creating network: %s...", network)
@@ -42,24 +43,24 @@ func createZapNetwork(dockerClient networkClient, network string) {
 }
 
 //Setup ZAP Network
-func (z *Zapgo) SetupZapNetwork(dockerClient networkClient) {
+func (c Docker) SetupZapNetwork(dockerClient networkClient) {
 
-	if z.IfZapNetworkExists(dockerClient) {
-		logrus.Infof("The network %s already exists", z.Network)
+	if c.IfZapNetworkExists(dockerClient) {
+		logrus.Infof("The network %s already exists", c.ZapConfig.Network)
 		return
 	}
-	createZapNetwork(dockerClient, z.Network)
+	createZapNetwork(dockerClient, c.ZapConfig.Network)
 }
 
 //Remove ZAP Network
-func (z *Zapgo) RemoveZapNetwork(dockerClient networkClient) {
-	ctx, cancel := context.WithTimeout(context.Background(), TimeoutInS)
+func (c Docker) RemoveZapNetwork(dockerClient networkClient) {
+	ctx, cancel := context.WithTimeout(context.Background(), defaults.TimeoutInS)
 	defer cancel()
 
-	logrus.Infof("Removing network: %s...", z.Network)
-	err := dockerClient.NetworkRemove(ctx, z.Network)
+	logrus.Infof("Removing network: %s...", c.ZapConfig.Network)
+	err := dockerClient.NetworkRemove(ctx, c.ZapConfig.Network)
 	if err != nil {
-		logrus.Fatalf("Failed to remove network %s due to %v", z.Network, err)
+		logrus.Fatalf("Failed to remove network %s due to %v", c.ZapConfig.Network, err)
 	}
-	logrus.Debugf("Removed network %s", z.Network)
+	logrus.Debugf("Removed network %s", c.ZapConfig.Network)
 }

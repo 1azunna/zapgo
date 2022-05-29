@@ -1,4 +1,4 @@
-package zapgo
+package utils
 
 import (
 	"os"

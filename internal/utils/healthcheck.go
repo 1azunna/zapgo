@@ -1,4 +1,4 @@
-package zapgo
+package utils
 
 import (
 	"net/http"
@@ -15,7 +15,7 @@ var retrySchedule = []time.Duration{
 	30 * time.Second,
 }
 
-func (z *Zapgo) HealthCheck(url string) {
+func HealthCheck(url string) {
 	var response *http.Response
 	// Wait 10seconds before checking for liveness
 	time.Sleep(10 * time.Second)

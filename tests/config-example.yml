@@ -6,17 +6,15 @@ env:
       - http://www.example.com
     includePaths:
       - ".*"
-    excludePaths: []
   parameters:
     failOnError: false
     failOnWarning: false
     progressToStdout: true
-  vars: {}
 
 jobs:
   - type: "passiveScan-config"
     parameters:
-      maxAlertsPerRule: 0
+      maxAlertsPerRule: 10
       scanOnlyInScope: true
       maxBodySizeInBytesToScan: 0
       enableTags: false
@@ -33,14 +31,8 @@ jobs:
       onFail: 'info'      
 
   - type: "passiveScan-wait"
-    parameters: {}
-
-  - type: "activeScan"
     parameters:
-      context: "Default Context"
-      policy: "API-Limited"
-      maxRuleDurationInMins: 0
-      maxScanDurationInMins: 0                       
+      maxDuration: 5                   
     
   - type: "outputSummary"
     parameters:

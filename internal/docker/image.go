@@ -1,4 +1,4 @@
-package zapgo
+package docker
 
 import (
 	"context"
@@ -7,7 +7,8 @@ import (
 	"io"
 	"strings"
 
-	u "github.com/1azunna/zapgo/utils"
+	"github.com/1azunna/zapgo/internal/defaults"
+	"github.com/1azunna/zapgo/internal/utils"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/sirupsen/logrus"
@@ -30,8 +31,8 @@ type imageClient interface {
 	ImagePull(ctx context.Context, refStr string, options types.ImagePullOptions) (io.ReadCloser, error)
 }
 
-func (z *Zapgo) ImageExists(dockerClient imageClient, image string) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), TimeoutInS)
+func (c Docker) ImageExists(dockerClient imageClient, image string) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), defaults.TimeoutInS)
 	defer cancel()
 
 	args := filters.NewArgs(filters.Arg("reference", image))
@@ -54,7 +55,7 @@ func (z *Zapgo) ImageExists(dockerClient imageClient, image string) bool {
 	return false
 }
 
-func (z *Zapgo) PullImage(dockerClient imageClient, image string) bool {
+func (c Docker) PullImage(dockerClient imageClient, image string) bool {
 	ctx := context.Background()
 	// pull the zap image from DockerHub
 	logrus.Info(fmt.Sprintf("Pulling the latest image verson for %s", image))
@@ -65,7 +66,7 @@ func (z *Zapgo) PullImage(dockerClient imageClient, image string) bool {
 
 	defer resp.Close()
 
-	cursor := u.Cursor{}
+	cursor := utils.Cursor{}
 	layers := make([]string, 0)
 	oldIndex := len(layers)
 
