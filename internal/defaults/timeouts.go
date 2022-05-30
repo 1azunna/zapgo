@@ -1,4 +1,4 @@
-package zapgo
+package defaults
 
 import (
 	"time"
@@ -11,4 +11,7 @@ const (
 
 	// LongTimeoutInS is the wait duration for long operations such as PullImage.
 	LongTimeoutInS = 120 * time.Second
+
+	// Maximum scan duration
+	MaxScanDurationInMins int = 30
 )
