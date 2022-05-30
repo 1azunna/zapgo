@@ -15,7 +15,7 @@ func GetScanResults(file string, planId string, filters types.AlertFilters, disp
 
 	yamlData, err := ioutil.ReadFile(file)
 	if err != nil {
-		panic(fmt.Sprintf("Could not parse yaml file %s \n%s", file, err))
+		logrus.Fatalln(fmt.Sprintf("Could not parse yaml file %s \n%s", file, err))
 	}
 
 	//Get contexts
@@ -27,7 +27,7 @@ func GetScanResults(file string, planId string, filters types.AlertFilters, disp
 		for _, url := range v.Urls {
 			zapAlerts, err := zapClient.Alert().AlertsByRisk(url, "true")
 			if err != nil {
-				panic(err)
+				logrus.Fatalln(err)
 			}
 			// fmt.Println(zapAlerts)
 			alerts := utils.GetAlerts(zapAlerts, filters)
@@ -36,7 +36,7 @@ func GetScanResults(file string, planId string, filters types.AlertFilters, disp
 			}
 			zapAlertsCount, err := zapClient.Alert().AlertCountsByRisk(url, "true")
 			if err != nil {
-				panic(err)
+				logrus.Fatalln(err)
 			}
 			count := utils.GetAlertsCount(zapAlertsCount)
 			totalCount.High = append(totalCount.High, count.High)

@@ -15,7 +15,7 @@ func NewClient() *client.Client {
 
 	client, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
-		logrus.Errorf("Could not create a docker client due to %v", err)
+		logrus.Fatalf("Could not create a docker client due to %v", err)
 	}
 	return client
 }

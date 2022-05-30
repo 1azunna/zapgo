@@ -3,7 +3,6 @@ package zaproxy
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -31,7 +30,7 @@ func ImportPolicy(file string, path string, zapClient zap.Interface) {
 		policyfile := filepath.Join("/zap/wrk/", file)
 		resp, err := zapClient.Ascan().ImportScanPolicy(policyfile)
 		if err != nil {
-			panic(err)
+			logrus.Fatalln(err)
 		}
 		// fmt.Println(resp)
 		logrus.Debugf("importing scan policy %s : %s", filepath.Join(path, file), resp["Result"])
@@ -42,7 +41,7 @@ func RunPlan(file string, path string, zapClient zap.Interface) string {
 	planfile := getPlan(file, path)
 	logrus.Infof("Running automation framework with file %s", planfile)
 
-	yamlData, err := ioutil.ReadFile(file)
+	yamlData, err := os.ReadFile(file)
 	if err != nil {
 		panic(fmt.Sprintf("Could not parse yaml file %s \n%s", file, err))
 	}
@@ -66,37 +65,46 @@ func RunPlan(file string, path string, zapClient zap.Interface) string {
 }
 
 func GetPlanStatus(planId string, zapClient zap.Interface) {
-	c := time.Tick(10 * time.Second)
-	index := 0
-	maxIndexSecs := defaults.MaxScanDurationInMins * 60
-	maxIndex := maxIndexSecs / 10
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+	m := (defaults.MaxScanDurationInMins * 60) / 10
+	done := make(chan bool)
 
-	for range c {
-		finished := false
-		//Get the plan progress
-		resp, err := zapClient.Automation().PlanProgress(planId)
-		if err != nil {
-			panic(err)
+	for i := -1; i < m; i++ {
+		start := time.Now()
+		duration := time.Since(start)
+
+		go func() {
+			//Get the plan progress
+			resp, err := zapClient.Automation().PlanProgress(planId)
+			if err != nil {
+				logrus.Fatalln(err)
+			}
+			// TODO: Implement check for plan errors
+			for k := range resp {
+				if k == "finished" {
+					done <- true
+					return
+				}
+			}
+		}()
+
+		select {
+		case <-done:
+			logrus.Infoln("Automation plan complete. Scan took", duration/time.Second)
+			return
+		case <-ticker.C:
 		}
+
 		// Check if the status is finished
-		index = index + 1
-		if index == maxIndex {
+		if i >= m {
 			logrus.Error("Plan Timeout Exceeded")
-			zapClient.Core().Shutdown()
+			_, err := zapClient.Core().Shutdown()
+			if err != nil {
+				logrus.Fatalln(err)
+			}
 			os.Exit(1)
 		}
-		// TODO: Implement check for plan errors
-		for k := range resp {
-			if k == "finished" {
-				finished = true
-				logrus.Info("Automation plan complete")
-				break
-			}
-		}
-		if finished {
-			break
-		}
-
 	}
 
 }

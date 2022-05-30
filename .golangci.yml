@@ -50,6 +50,12 @@ issues:
     - text: "G107: Potential HTTP request made with variable url"
       linters:
         - gosec
-    - text: "composites: `github.com/1azunna/zapgo/internal/zapgo.Zapgo` composite literal uses unkeyed fields"
+    - text: "G304: Potential file inclusion via variable"
+      linters:
+        - gosec
+    - text: "composites: `github.com/1azunna/zapgo/internal/docker.Docker` composite literal uses unkeyed fields"
       linters:
         - govet
+    - text: "SA5008: duplicate struct tag \"choice\""
+      linters:
+        - staticcheck

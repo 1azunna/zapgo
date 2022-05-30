@@ -189,16 +189,17 @@ func (c Docker) RunNewman(dockerClient containerClient) {
 	logrus.Infof("Creating new container: %s...", c.PmConfig.Container)
 	resp, err := dockerClient.ContainerCreate(ctx, config, host_config, network_config, nil, c.PmConfig.Container)
 	if err != nil {
-		logrus.Fatalf("Failed to create container %s due to %v", c.PmConfig.Container, err)
+		logrus.Errorf("Failed to create container %s due to %v", c.PmConfig.Container, err)
+	} else {
+		logrus.Debugf("Created the %s container with ID %s", c.PmConfig.Container, resp.ID)
 	}
-
-	logrus.Debugf("Created the %s container with ID %s", c.PmConfig.Container, resp.ID)
 
 	// If the container is already running, Docker does not return an error response.
 	if err := dockerClient.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
-		logrus.Fatalf("Failed to start container with ID %s due to %v", resp.ID, err)
+		logrus.Errorf("Failed to start container with ID %s due to %v", resp.ID, err)
+	} else {
+		logrus.Debugf("Started Newman container with ID %s", resp.ID)
 	}
-	logrus.Debugf("Started Newman container with ID %s", resp.ID)
 	//Output Newman Logs
 	reader, err := dockerClient.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{
 		ShowStderr: true,
@@ -208,9 +209,10 @@ func (c Docker) RunNewman(dockerClient containerClient) {
 		Tail:       "40",
 	})
 	if err != nil {
-		logrus.Fatal(err)
+		return
+		// logrus.Fatal(err)
 	}
 	if _, err = io.Copy(os.Stdout, reader); err != nil && err != io.EOF {
-		logrus.Fatal(err)
+		return // logrus.Fatal(err)
 	}
 }

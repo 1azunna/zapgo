@@ -30,7 +30,9 @@ func newman(zapgo *docker.Docker) {
 		zapgo.PullImage(client, zapgo.PmConfig.Image)
 	}
 	zapgo.RunNewman(client)
-	for range time.Tick(5 * time.Second) {
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+	for range ticker.C {
 		if _, ifExists := zapgo.IfContainerExists(client, zapgo.PmConfig.Container); !ifExists {
 			break
 		}

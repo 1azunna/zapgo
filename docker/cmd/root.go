@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 
 	args "github.com/1azunna/zapgo/arguments"
 	"github.com/1azunna/zapgo/internal/docker"
@@ -60,6 +62,18 @@ func Execute() {
 	// Return the zap host url
 	baseURL = fmt.Sprintf("http://localhost:%s", zapOpts.Port)
 
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc,
+		os.Interrupt,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+
+	go func() {
+		<-sigc
+		logrus.Warnln(<-sigc, "signal received")
+		cleanCmd.Execute(zapgoDocker)
+	}()
+
 	switch args.Parser.Active.Name {
 	case "init":
 		initCmd.Execute(zapgoDocker)
@@ -70,4 +84,5 @@ func Execute() {
 	default:
 		os.Exit(1)
 	}
+
 }
