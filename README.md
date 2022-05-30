@@ -29,17 +29,15 @@ See [Releases](https://github.com/1azunna/zapgo/releases)
 Using Wget
 
 ```bash
-wget -qO- https://github.com/1azunna/zapgo/releases/download/v0.1.0/zapgo-v0.1.0-<OS>-<Arch>.tar.gz | tar -xvzf - -C . 
-mv ./zapgo /usr/local/bin/zapgo
-chmod +x /usr/local/bin/zapgo
+wget -qO- https://github.com/1azunna/zapgo/releases/download/v0.1.0/zapgo-v0.1.0-<OS>-<Arch>.tar.gz -O zapgo-v0.1.0.tar.gz
+tar -xvzf zapgo-v0.1.0.tar.gz -C /usr/local/bin
 
 ```
 
 Using Curl
 ```bash
-curl -sSfL https://github.com/1azunna/zapgo/releases/download/v0.1.0/zapgo-v0.1.0-<OS>-<Arch>.tar.gz | tar -xvzf - -C . 
-mv ./zapgo /usr/local/bin/zapgo
-chmod +x /usr/local/bin/zapgo
+curl -sSfL https://github.com/1azunna/zapgo/releases/download/v0.1.0/zapgo-v0.1.0-<OS>-<Arch>.tar.gz -o zapgo-v0.1.0.tar.gz
+tar -xvzf zapgo-v0.1.0.tar.gz -C /usr/local/bin
 ```
 
 ### Build from source
