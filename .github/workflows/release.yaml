@@ -1,10 +1,5 @@
 name: Release
 on:
-  workflow_run:
-    workflows: ["golangci-lint"]
-    branches: [main]
-    types: 
-      - completed
   release:
     types: [created]
 
@@ -19,12 +14,17 @@ jobs:
         goarch: [amd64, arm64]
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: wangyoucao577/go-release-action@v1.24
+    - uses: actions/checkout@v3
+    - name: Get current date
+      id: date
+      run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+    - name: GoReleaser
+      uses: wangyoucao577/go-release-action@v1.28
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         goos: ${{ matrix.goos }}
         goarch: ${{ matrix.goarch }}
         goversion: "https://dl.google.com/go/go1.17.6.linux-amd64.tar.gz"
-        project_path: "."
         binary_name: "zapgo"
+        build_flags: "-tags=${{ github.ref_name }} -v"
+        ldflags: "-s -w -X main.version=${{ github.ref_name }} -X main.date=${{ steps.date.outputs.date }}"
