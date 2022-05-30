@@ -1,0 +1,6 @@
+builds:
+  - flags:
+      - -tags={{.Tag}}
+      - -v
+  - ldflags:
+      - -s -w -X main.version={{.Version}} -X main.date={{.Date}}
